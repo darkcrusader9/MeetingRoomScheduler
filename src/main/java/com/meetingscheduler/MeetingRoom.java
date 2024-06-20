@@ -1,10 +1,11 @@
 package com.meetingscheduler;
 
-import com.meetingscheduler.model.Calendar;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 
 
 @Setter
@@ -12,24 +13,43 @@ import java.util.Date;
 public class MeetingRoom {
     private String meetingRoomId;
     private int capacity;
-    Calendar calendar;
+    List<Meeting> scheduledMeetingList;
 
 
     public MeetingRoom(String meetingRoomId, int capacity) {
         this.meetingRoomId = meetingRoomId;
         this.capacity = capacity;
-        this.calendar = new Calendar();
+        this.scheduledMeetingList = new ArrayList<>();
     }
 
-    public void addCalendar(Calendar calendar) {
-        this.calendar = calendar;
+    public void addMeeting(Meeting meeting) {
+        int index = binarySearchInsertIndex(meeting.getStartTime());
+        scheduledMeetingList.add(index, meeting);
     }
 
-    public void addMeeting(Meeting meeting){
-        calendar.addMeeting(meeting);
+    private int binarySearchInsertIndex(Date startTime) {
+        int low = 0;
+        int high = scheduledMeetingList.size() - 1;
+
+        while (low <= high) {
+            int mid = (low + high) / 2;
+            Date midDate = scheduledMeetingList.get(mid).getStartTime();
+
+            if (midDate.before(startTime)) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return low;
     }
 
     public boolean checkAvailability(Date startTime, Date endTime){
-        return calendar.isAvailable(startTime, endTime);
+        for (Meeting scheduledMeeting : scheduledMeetingList) {
+            if (startTime.before(scheduledMeeting.getEndTime()) && endTime.after(scheduledMeeting.getStartTime())) {
+                return false;
+            }
+        }
+        return true;
     }
 }
